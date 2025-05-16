@@ -1,4 +1,3 @@
-
 from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import JSONResponse
 import fitz  # PyMuPDF
@@ -8,19 +7,19 @@ import unicodedata
 
 app = FastAPI()
 
-# Supprime les accents
+# Supprimer les accents
 def remove_accents(s):
     return ''.join(
         c for c in unicodedata.normalize('NFD', s)
         if unicodedata.category(c) != 'Mn'
     )
 
-# OCR si le texte est vide
+# Fallback OCR si le PDF ne contient pas de texte
 def extract_text_with_ocr(pdf_bytes):
     images = convert_from_bytes(pdf_bytes)
     text = ""
     for img in images:
-        text += pytesseract.image_to_string(img)
+        text += pytesseract.image_to_string(img, lang="fra")
     return text
 
 @app.post("/extract")
@@ -37,18 +36,23 @@ async def extract(file: UploadFile = File(...)):
     except Exception as e:
         return JSONResponse(content={"error": f"PDF reading failed: {str(e)}"}, status_code=500)
 
-    # Si texte vide, fallback OCR
+    # Si aucun texte détecté, lancer l’OCR
     if not text.strip():
         text = extract_text_with_ocr(content)
 
     text_cleaned = remove_accents(text.lower())
 
+    # Détection de commandes (élargie)
     commande_detectee = any(
         phrase in text_cleaned
         for phrase in [
             "reference commande client",
             "commande client",
-            "n commande client"
+            "n commande client",
+            "purchase order",
+            "bon de commande",
+            "po",
+            "po#"
         ]
     )
 
