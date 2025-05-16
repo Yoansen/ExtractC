@@ -1,4 +1,4 @@
-
+unicodedata2
 fastapi
 uvicorn
 PyMuPDF
