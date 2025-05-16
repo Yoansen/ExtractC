@@ -1,26 +1,27 @@
-
 FROM python:3.9-slim
 
-# Install dependencies
+# Installer les dépendances système nécessaires
 RUN apt-get update && apt-get install -y \
     poppler-utils \
     tesseract-ocr \
+    tesseract-ocr-fra \
     libgl1-mesa-glx \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
+# Définir le répertoire de travail
 WORKDIR /app
 
-# Copy files
-COPY requirements.txt .
-COPY app.py .
+# Copier les fichiers requis dans l'image
+COPY requirements.txt ./
+COPY app.py ./
 
-# Install Python dependencies
+# Installer les dépendances Python
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Expose port
-EXPOSE 10000
+# Définir la variable d’environnement du port pour Render
+ENV PORT=10000
+EXPOSE $PORT
 
-# Start the app
+# Lancer l'application
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "10000"]
