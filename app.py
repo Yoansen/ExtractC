@@ -46,13 +46,13 @@ async def extract(file: UploadFile = File(...)):
     commande_detectee = any(
         phrase in text_cleaned
         for phrase in [
-            "reference commande client",
-            "commande client",
-            "n commande client",
-            "purchase order",
-            "bon de commande",
-            "po",
-            "po#"
+            "reference commande client :",
+            "commande client :",
+            "N° commande client :",
+            "purchase order :",
+            "bon de commande :",
+            "po :",
+            "po# :"
         ]
     )
 
