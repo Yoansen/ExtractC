@@ -4,6 +4,7 @@ import fitz  # PyMuPDF
 import pytesseract
 from pdf2image import convert_from_bytes
 import unicodedata
+import re
 
 app = FastAPI()
 
@@ -14,7 +15,7 @@ def remove_accents(s):
         if unicodedata.category(c) != 'Mn'
     )
 
-# Fallback OCR si le PDF ne contient pas de texte
+# OCR fallback si aucun texte brut n’est trouvé
 def extract_text_with_ocr(pdf_bytes):
     images = convert_from_bytes(pdf_bytes)
     text = ""
@@ -36,25 +37,27 @@ async def extract(file: UploadFile = File(...)):
     except Exception as e:
         return JSONResponse(content={"error": f"PDF reading failed: {str(e)}"}, status_code=500)
 
-    # Si aucun texte détecté, lancer l’OCR
+    # Fallback OCR si texte brut vide
     if not text.strip():
         text = extract_text_with_ocr(content)
 
+    # Nettoyage : minuscules, accents et espaces multiples
     text_cleaned = remove_accents(text.lower())
+    text_cleaned = re.sub(r"\s+", " ", text_cleaned)  # remplacer les espaces multiples par un seul
 
-    # Détection de commandes (élargie)
-    commande_detectee = any(
-        phrase in text_cleaned
-        for phrase in [
-            "reference commande client :",
-            "commande client :",
-            "N° commande client :",
-            "purchase order :",
-            "bon de commande :",
-            "po :",
-            "po# :"
-        ]
-    )
+    # Liste des expressions à détecter
+    motifs_commande = [
+        r"reference[\s:-]*commande[\s:-]*client",
+        r"commande[\s:-]*client",
+        r"n[\s:-]*commande[\s:-]*client",
+        r"purchase[\s:-]*order",
+        r"bon[\s:-]*de[\s:-]*commande",
+        r"\bpo\b",
+        r"\bpo#\b"
+    ]
+
+    # Détection des motifs dans le texte nettoyé
+    commande_detectee = any(re.search(motif, text_cleaned) for motif in motifs_commande)
 
     return {
         "text": text,
