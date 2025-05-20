@@ -54,7 +54,9 @@ async def extract(file: UploadFile = File(...)):
         r"bon[\s:-]*de[\s:-]*commande",
         r"\bpo\b",
         r"\bpo#\b",
-        r"commande[\s:-]*45"
+        r"commande[\s:-]*45",
+        r"oa[\s:-]*client",             
+        r"your[\s:-]*reference"  
     ]
 
     # Détection des motifs dans le texte nettoyé
